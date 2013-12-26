@@ -1,1 +1,53 @@
-HELLO WORLD
+﻿<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <title>杂志信息采集检索系统</title>
+    <link rel="stylesheet" href="/static/css/pure-min.css">
+    <link rel="stylesheet" href="/static/css/baby-blue.css">
+    <link rel="stylesheet" href="/static/css/tablesorter/blue/style.css" type="text/css" media="print, projection, screen" />
+    <script type="text/javascript" src="/static/js/jquery-1.4.3.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.tablesorter.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            //表格显示
+            $("#myTable").tablesorter({
+                widgets: ['zebra']
+            })
+
+            $("#index").addClass("pure-menu-selected")
+        })
+    </script>
+</head>
+
+<body>
+
+
+<div class="pure-g-r" id="layout" style="letter-spacing:0">
+
+
+    {% include "menu.html" %}
+
+
+
+    <div id="right">
+
+        <div class="header">
+            <h1>数据采集</h1>
+        </div>
+
+        <div id="content" style="text-align: center;margin-top: 30px">
+
+
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+</body>
+
+</html>

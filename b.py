@@ -41,49 +41,37 @@ def get_page(url, data=None):
 
 
 
-url = 'http://www.sciencedirect.com/science/journal/19389736'
-ts = url.split("/")
-ti = ts.index("journal")
-book_id = ts[ti+1]
-print book_id
+url = 'http://onlinelibrary.wiley.com/journal/10.1111/(ISSN)1463-6395'
+p_str = get_page(url+"/issues/fragment?activeYear=2000")
+issues = re.findall(r'<div class="issue"><a href="(.*?)" shape="rect">', p_str)
 
+
+
+url = "http://onlinelibrary.wiley.com/doi/10.1111/azo.2000.81.issue-4/issuetoc"
 p_str = get_page(url)
-book_name = re.findall(r'<h1><b>(.*?)</b></h1>', p_str)[0]
-
-"""
-links = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', p_str)
-for link in links:
-    p_str = get_page(link + "?np=y")
-    p_soup = BeautifulSoup.BeautifulSoup(p_str)
-    authorgroup = p_soup.findAll("ul")
-    print authorgroup
-    break
-"""
+links = re.findall(r'<div class="citation tocArticle"><a href="(.*?)" shape="rect">', p_str)
 
 
-url = "http://www.sciencedirect.com/science/article/pii/S1938973613000809?np=y"
+
+url = "http://onlinelibrary.wiley.com/doi/10.1046/j.1463-6395.2000.00057.x/abstract"
 p_str = get_page(url)
-
 p_soup = BeautifulSoup.BeautifulSoup(p_str)
-title = p_soup.find("title").getText()
-page = p_soup.find("p", "volIssue").getText().replace("&euro;&ldquo;", " - ")
+title = p_soup.find("span", "mainTitle").getText()
+book_name = p_soup.find(id="productTitle").getText()
+page = p_soup.find("p", "articleDetails").getText()
 
-
-
-authorgroup = p_soup.find("ul", "authorGroup")
-if authorgroup:
-    lis = authorgroup.findAll("li")
-    for li in lis:
-        author_name = li.find("a", "authorName").getText()
-        mails = re.findall(r'<a href="mailto:(.*?)">', str(li))
-        for mail in mails:
-            print title
-            print book_name
-            print page
-            print author_name
-            print mail
-
+author_lis = p_soup.find(id="authors").findAll("li")
+for li in author_lis:
+    if "*" in str(li):
+        li_text = li.getText()
+        ti = li_text.find("*")
+        author_name = li_text[:ti]
+        mail = re.findall(r'<a href="mailto:(.*?)"', p_str)[0]
+        mail = mail.replace("%E2%80%90", "-")
         
-
-
+        print title
+        print book_name
+        print page
+        print author_name
+        print mail
 

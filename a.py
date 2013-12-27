@@ -44,13 +44,53 @@ def get_page(url, data=None):
 
 
 
-
+host_url = 'http://www.sciencedirect.com'
 url = 'http://www.sciencedirect.com/science/journal/19389736'
 p_str = get_page(url)
+p_soup = BeautifulSoup.BeautifulSoup(p_str)
 book_name = re.findall(r'<h1><b>(.*?)</b></h1>', p_str)[0]
 
 
-links = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', p_str)
+year_links = []
+issue_links = []
+links = []
+
+
+tab = p_soup.find(id="volumeIssueData")
+year_divs = tab.findAll("div", "txtBold")
+for year in year_divs:
+    year_links.append(year.find("a").get("href"))
+
+print year_links
+
+for year_link in year_links:
+    issue_links.append(year_link)
+    if year_link[0] == "/":
+        year_link = host_url + year_link
+    y_str = get_page(year_link)
+    y_soup = BeautifulSoup.BeautifulSoup(y_str)
+    tab = y_soup.find(id="volumeIssueData")
+    issue_tds = tab.findAll("td", "txt")
+    for td in issue_tds:
+        issue_link = td.find("a")
+        if issue_link:
+            issue_link = issue_link.get("href")
+        if issue_link and issue_link not in issue_links:
+            issue_links.append(issue_link)
+            
+print issue_links
+
+for issue_link in issue_links:
+    if issue_link[0] == "/":
+        issue_link = host_url + issue_link
+    i_str = get_page(issue_link)
+    ts = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', i_str)
+    for t in ts:
+        if t not in links:
+            links.append(t)
+
+print links
+
 for link in links:
     url = link + "?np=y"
     p_str = get_page(url)
@@ -74,7 +114,7 @@ for link in links:
                 print link
                 print "-------------------"
 
-        
+            
 
 
 

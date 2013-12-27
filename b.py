@@ -5,6 +5,9 @@ import time
 import re
 import traceback
 import BeautifulSoup
+import HTMLParser
+
+html_parser = HTMLParser.HTMLParser()
 
 
 cj = cookielib.CookieJar()
@@ -40,38 +43,45 @@ def get_page(url, data=None):
 
 
 
-
+host_url = "http://onlinelibrary.wiley.com"
 url = 'http://onlinelibrary.wiley.com/journal/10.1111/(ISSN)1463-6395'
-p_str = get_page(url+"/issues/fragment?activeYear=2000")
-issues = re.findall(r'<div class="issue"><a href="(.*?)" shape="rect">', p_str)
-
-
-
-url = "http://onlinelibrary.wiley.com/doi/10.1111/azo.2000.81.issue-4/issuetoc"
-p_str = get_page(url)
-links = re.findall(r'<div class="citation tocArticle"><a href="(.*?)" shape="rect">', p_str)
-
-
-
-url = "http://onlinelibrary.wiley.com/doi/10.1046/j.1463-6395.2000.00057.x/abstract"
-p_str = get_page(url)
-p_soup = BeautifulSoup.BeautifulSoup(p_str)
-title = p_soup.find("span", "mainTitle").getText()
-book_name = p_soup.find(id="productTitle").getText()
-page = p_soup.find("p", "articleDetails").getText()
-
-author_lis = p_soup.find(id="authors").findAll("li")
-for li in author_lis:
-    if "*" in str(li):
-        li_text = li.getText()
-        ti = li_text.find("*")
-        author_name = li_text[:ti]
-        mail = re.findall(r'<a href="mailto:(.*?)"', p_str)[0]
-        mail = mail.replace("%E2%80%90", "-")
+links = []
+for year in range(2013,2015):
+    print year
+    year_url = url + "/issues/fragment?activeYear=" + str(year)
+    p_str = get_page(year_url)
+    issues = re.findall(r'<div class="issue"><a href="(.*?)"', p_str)
+    print issues
+    for issue_url in issues:
+        if issue_url[0] == "/":
+            issue_url = host_url + issue_url
+        i_str = get_page(issue_url)
+        links += re.findall(r'<div class="citation tocArticle"><a href="(.*?)"', i_str)
         
-        print title
-        print book_name
-        print page
-        print author_name
-        print mail
+print links
+
+for link in links:
+    if link[0] == "/":
+        link = host_url + link
+    p_str = get_page(link)
+    p_soup = BeautifulSoup.BeautifulSoup(p_str)
+    title = p_soup.find("span", "mainTitle").getText()
+    book_name = p_soup.find(id="productTitle").getText()
+    page = p_soup.find("p", "articleDetails").getText()
+
+    author_lis = p_soup.find(id="authors").findAll("li")
+    for li in author_lis:
+        if "*" in str(li):
+            li_text = li.getText()
+            ti = li_text.find("*")
+            author_name = li_text[:ti]
+            mail = re.findall(r'<a href="mailto:(.*?)"', p_str)[0]
+            mail = mail.replace("%E2%80%90", "-")
+            print html_parser.unescape(title)
+            print html_parser.unescape(book_name)
+            print html_parser.unescape(page)
+            print html_parser.unescape(author_name)
+            print html_parser.unescape(mail)
+            print link
+            print "-------------------"
 

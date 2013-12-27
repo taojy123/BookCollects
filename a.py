@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pprint
 import cookielib
 import urllib2, urllib
@@ -5,6 +6,9 @@ import time
 import re
 import traceback
 import BeautifulSoup
+import HTMLParser
+
+html_parser = HTMLParser.HTMLParser()
 
 
 cj = cookielib.CookieJar()
@@ -42,46 +46,33 @@ def get_page(url, data=None):
 
 
 url = 'http://www.sciencedirect.com/science/journal/19389736'
-ts = url.split("/")
-ti = ts.index("journal")
-book_id = ts[ti+1]
-print book_id
-
 p_str = get_page(url)
 book_name = re.findall(r'<h1><b>(.*?)</b></h1>', p_str)[0]
 
-"""
+
 links = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', p_str)
 for link in links:
-    p_str = get_page(link + "?np=y")
+    url = link + "?np=y"
+    p_str = get_page(url)
+
     p_soup = BeautifulSoup.BeautifulSoup(p_str)
-    authorgroup = p_soup.findAll("ul")
-    print authorgroup
-    break
-"""
+    title = p_soup.find("title").getText()
+    page = p_soup.find("p", "volIssue").getText().replace(u"â&euro;&ldquo;", " - ")
 
-
-url = "http://www.sciencedirect.com/science/article/pii/S1938973613000809?np=y"
-p_str = get_page(url)
-
-p_soup = BeautifulSoup.BeautifulSoup(p_str)
-title = p_soup.find("title").getText()
-page = p_soup.find("p", "volIssue").getText().replace("&euro;&ldquo;", " - ")
-
-
-
-authorgroup = p_soup.find("ul", "authorGroup")
-if authorgroup:
-    lis = authorgroup.findAll("li")
-    for li in lis:
-        author_name = li.find("a", "authorName").getText()
-        mails = re.findall(r'<a href="mailto:(.*?)">', str(li))
-        for mail in mails:
-            print title
-            print book_name
-            print page
-            print author_name
-            print mail
+    authorgroup = p_soup.find("ul", "authorGroup")
+    if authorgroup:
+        lis = authorgroup.findAll("li")
+        for li in lis:
+            author_name = li.find("a", "authorName").getText()
+            mails = re.findall(r'<a href="mailto:(.*?)">', str(li))
+            for mail in mails:
+                print html_parser.unescape(title)
+                print html_parser.unescape(book_name)
+                print html_parser.unescape(page)
+                print html_parser.unescape(author_name)
+                print html_parser.unescape(mail)
+                print link
+                print "-------------------"
 
         
 

@@ -1,4 +1,3 @@
-
 from django.conf.urls import patterns, include, url
 from views import *
 # Uncomment the next two lines to enable the admin:
@@ -14,6 +13,10 @@ urlpatterns = patterns('',
     # url(r'^admin/', include(admin.site.urls)),
     ('^$', index),
     ('^index/$', index),
+    ('^collect/$', collect),
+    ('^data/$', data),
+    ('^del_art/(.*?)$', del_art),
+    ('^update_art/$', update_art),
 )
 # This will work if DEBUG is True
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns

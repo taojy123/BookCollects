@@ -1,0 +1,94 @@
+﻿<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <title>杂志信息采集检索系统</title>
+    <link rel="stylesheet" href="/static/css/pure-min.css">
+    <link rel="stylesheet" href="/static/css/baby-blue.css">
+    <link rel="stylesheet" href="/static/css/tablesorter/blue/style.css" type="text/css" media="print, projection, screen" />
+    <script type="text/javascript" src="/static/js/jquery-1.4.3.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.tablesorter.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            //表格显示
+            $("#myTable").tablesorter({
+                widgets: ['zebra']
+            })
+
+            $("#data").addClass("pure-menu-selected")
+
+        })
+    </script>
+</head>
+
+<body>
+
+
+<div class="pure-g-r" id="layout" style="letter-spacing:0">
+
+
+    {% include "menu.html" %}
+
+
+
+    <div id="right">
+
+        <div class="header">
+            <h1>数据管理</h1>
+        </div>
+
+        <div id="content" style="text-align: center;margin-top: 30px" >
+            <table id="myTable" class="tablesorter">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>文章名称</th>
+                        <th>期刊名称</th>
+                        <th>文章页码及刊号</th>
+                        <th>文章作者</th>
+                        <th>作者mail</th>
+                        <th>文章链接</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for art in arts %}
+                        <tr>
+                            <td>{{ art.id }}</td>
+                            <td>{{ art.title }}</td>
+                            <td>{{ art.book_name }}</td>
+                            <td>{{ art.page }}</td>
+                            <td>{{ art.author_name }}</td>
+                            <td>{{ art.mail }}</td>
+                            <td><a href="{{ art.link }}" target="_blank">{{ art.link }}</a></td>
+                            <td>
+                                <a style="cursor: pointer;white-space:nowrap;display: none" href="/del_art/{{ art.id }}" onclick="return confirm('确定要删除？')">删除</a>
+                                <a style="cursor: pointer;white-space:nowrap" onclick="$(this).next().toggle()">修改</a>
+                                <form action="/update_art/" style="display: none" >
+                                    <input type="hidden" name="id" value="{{ art.id }}" style="width: 300px" />
+                                    <input type="text" name="title" value="{{ art.title }}" style="width: 300px" />
+                                    <input type="text" name="book_name" value="{{ art.book_name }}" style="width: 300px" />
+                                    <input type="text" name="page" value="{{ art.page }}" style="width: 300px" />
+                                    <input type="text" name="author_name" value="{{ art.author_name }}" style="width: 300px" />
+                                    <input type="text" name="mail" value="{{ art.mail }}" style="width: 300px" />
+                                    <input type="text" name="link" value="{{ art.link }}" style="width: 300px" />
+                                    <input type="submit" value="确定" />
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+</body>
+
+</html>

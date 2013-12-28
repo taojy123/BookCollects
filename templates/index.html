@@ -15,6 +15,31 @@
             })
 
             $("#index").addClass("pure-menu-selected")
+
+
+            $("#collect").click(function(){
+                $("#form").hide()
+                $("#waiting").show()
+                $("#info").html("")
+                var urls = $("#urls").val()
+                $.ajax({
+                    url:"/collect/",
+                    data:{urls:urls},
+                    success:function(msg){
+                        alert("完成！共获取 " + msg + " 条新记录")
+                        $("#form").show()
+                        $("#waiting").hide()
+                        top.location = "/data/"
+                    },
+                    error:function(request){
+                        alert("遇到错误，请重试")
+                        $("#info").html("<textarea style='width: 600px; height: 300px'>"+request.response+"</textarea>")
+                        $("#form").show()
+                        $("#waiting").hide()
+                    }
+                })
+            })
+
         })
     </script>
 </head>
@@ -35,7 +60,19 @@
             <h1>数据采集</h1>
         </div>
 
-        <div id="content" style="text-align: center;margin-top: 30px">
+        <div id="content" style="text-align: center;margin-top: 30px" >
+            <div  id="form">
+                <textarea name="urls" style="width: 600px; height: 300px" id="urls">
+http://www.sciencedirect.com/science/journal/19389736
+http://onlinelibrary.wiley.com/journal/10.1111/(ISSN)1463-6395
+                </textarea>
+                <br/>
+                <br/>
+                <button class="pure-button pure-button-primary" id="collect">开始采集</button>
+            </div>
+
+            <img src="/static/images/waiting.gif" id="waiting" style="display: none"/>
+            <div id="info"></div>
 
 
 

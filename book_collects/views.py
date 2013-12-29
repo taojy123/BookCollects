@@ -276,7 +276,7 @@ def collect(request):
             collect_sciencedirect(url)
         elif "onlinelibrary" in url:
             collect_onlinelibrary(url)
-    time.sleep(10)
+    time.sleep(5)
     return HttpResponse(str(result_num))
 
 

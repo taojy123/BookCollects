@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
+import datetime
 
 
 class Art(models.Model):
@@ -10,6 +11,11 @@ class Art(models.Model):
     author_name = models.CharField(max_length=255, blank=True , null=True)
     mail = models.CharField(max_length=255, blank=True , null=True)
     link = models.CharField(max_length=255, blank=True , null=True)
+    time = models.DateTimeField(auto_now_add=True)
+
+    def time_str(self):
+        return self.time.strftime("%Y-%m-%d")
+
 
 
 class Read(models.Model):

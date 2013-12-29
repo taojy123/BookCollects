@@ -46,6 +46,7 @@
                         <th>文章页码及刊号</th>
                         <th>文章作者</th>
                         <th>作者mail</th>
+                        <th>采集时间</th>
                         <th>文章链接</th>
                         <th>操作</th>
                     </tr>
@@ -59,6 +60,7 @@
                             <td>{{ art.page }}</td>
                             <td>{{ art.author_name }}</td>
                             <td>{{ art.mail }}</td>
+                            <td>{{ art.time_str }}</td>
                             <td><a href="{{ art.link }}" target="_blank">{{ art.link }}</a></td>
                             <td>
                                 <a style="cursor: pointer;white-space:nowrap;display: none" href="/del_art/{{ art.id }}" onclick="return confirm('确定要删除？')">删除</a>

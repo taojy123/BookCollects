@@ -58,6 +58,16 @@ def add_art(title, book_name, page, author_name, mail, link):
     author_name = html_parser.unescape(author_name)
     mail = html_parser.unescape(mail)
 
+    chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    while True:
+        print author_name
+        if not author_name:
+            break
+        if author_name[-1] in chars:
+            break
+        else:
+            author_name = author_name[:-1]
+
     art = Art()
     art.title = title
     art.book_name = book_name
@@ -77,11 +87,14 @@ def add_art(title, book_name, page, author_name, mail, link):
 
 
 def add_read(issue_links):
+    """
     for issue_url in issue_links:
         if not Read.objects.filter(url=issue_url):
             r = Read()
             r.url = issue_url
             r.save()
+    """
+    return
 
 
 class Collect_link(threading.Thread):
@@ -129,10 +142,11 @@ class Collect_link(threading.Thread):
                             li_text = li.getText()
                             ti = li_text.find("*")
                             author_name = li_text[:ti]
-                            mail = re.findall(r'<a href="mailto:(.*?)"', p_str)[0]
-                            mail = mail.replace("%E2%80%90", "-")
-                            result_num += 1
-                            add_art(title, book_name, page, author_name, mail, link)
+                            mails = re.findall(r'<a href="mailto:(.*?)"', p_str)
+                            for mail in mails:
+                                mail = mail.replace("%E2%80%90", "-")
+                                result_num += 1
+                                add_art(title, book_name, page, author_name, mail, link)
 
 
 
@@ -214,7 +228,7 @@ def collect_onlinelibrary(url):
     #url = 'http://onlinelibrary.wiley.com/journal/10.1111/(ISSN)1463-6395'
     links = []
     issue_links =[]
-    for year in range(2012,2015):
+    for year in range(2000,2015):
         print year
         year_url = url + "/issues/fragment?activeYear=" + str(year)
         p_str = get_page(year_url)

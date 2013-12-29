@@ -87,14 +87,40 @@ def add_art(title, book_name, page, author_name, mail, link):
 
 
 def add_read(issue_links):
-    """
     for issue_url in issue_links:
         if not Read.objects.filter(url=issue_url):
             r = Read()
             r.url = issue_url
             r.save()
-    """
-    return
+
+
+
+class Collect_issue(threading.Thread):
+    def __init__(self,issue_queue,queue):
+        self.queue=queue
+        self.issue_queue=issue_queue
+        threading.Thread.__init__(self)
+    def run(self):
+        while not self.issue_queue.empty():
+            link = self.issue_queue.get()
+            if "sciencedirect" in link:
+                i_str = get_page(link)
+                ts = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', i_str)
+                for t in ts:
+                    if t not in self.queue.queue:
+                        self.queue.put(t)
+            elif "onlinelibrary" in link:
+                if  Read.objects.filter(url=link):
+                    continue
+                i_str = get_page(link)
+                ts = re.findall(r'<div class="citation tocArticle"><a href="(.*?)"', i_str)
+                for t in ts:
+                    if t[0] == "/":
+                        t = "http://onlinelibrary.wiley.com" + t
+                    if t not in self.queue.queue:
+                        self.queue.put(t)
+
+
 
 
 class Collect_link(threading.Thread):
@@ -136,17 +162,27 @@ class Collect_link(threading.Thread):
                 page = p_soup.find("p", "articleDetails").getText()
 
                 if p_soup.find(id="authors"):
+                    author_name = ""
                     author_lis = p_soup.find(id="authors").findAll("li")
                     for li in author_lis:
                         if "*" in str(li):
                             li_text = li.getText()
                             ti = li_text.find("*")
                             author_name = li_text[:ti]
-                            mails = re.findall(r'<a href="mailto:(.*?)"', p_str)
-                            for mail in mails:
-                                mail = mail.replace("%E2%80%90", "-")
-                                result_num += 1
-                                add_art(title, book_name, page, author_name, mail, link)
+                            while True:
+                                if not author_name:
+                                    break
+                                if author_name[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                                    break
+                                else:
+                                    author_name = author_name[1:]
+                    mails = re.findall(r'<a href="mailto:(.*?)"', p_str)
+                    for mail in mails:
+                        mail = mail.replace("%E2%80%90", "-")
+                        if not author_name:
+                            author_name = mail[:mail.find("@")].replace(".", " ")
+                        result_num += 1
+                        add_art(title, book_name, page, author_name, mail, link)
 
 
 
@@ -194,18 +230,38 @@ def collect_sciencedirect(url):
 
     print issue_links
 
+    issue_queue = Queue.Queue()
+    queue = Queue.Queue()
+
+    for link in issue_links:
+        issue_queue.put(link)
+
+    t_num = 10
+    threads=[]
+    for i in xrange(t_num):
+        threads.append(Collect_issue(issue_queue, queue))
+    for i in xrange(t_num):
+        threads[i].start()
+    for i in xrange(t_num):
+        threads[i].join()
+
+
+    """
     for issue_url in issue_links:
         i_str = get_page(issue_url)
         ts = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', i_str)
         for t in ts:
             if t not in links:
                 links.append(t)
+    """
 
+    print queue.queue
+
+    """
     print links
-
-    queue = Queue.Queue()
     for link in links:
         queue.put(link)
+    """
 
     t_num = 10
     threads=[]
@@ -242,6 +298,22 @@ def collect_onlinelibrary(url):
 
     print issue_links
 
+    issue_queue = Queue.Queue()
+    queue = Queue.Queue()
+
+    for link in issue_links:
+        issue_queue.put(link)
+
+    t_num = 10
+    threads=[]
+    for i in xrange(t_num):
+        threads.append(Collect_issue(issue_queue, queue))
+    for i in xrange(t_num):
+        threads[i].start()
+    for i in xrange(t_num):
+        threads[i].join()
+
+    """
     for issue_url in issue_links:
         if  Read.objects.filter(url=issue_url):
             continue
@@ -251,12 +323,15 @@ def collect_onlinelibrary(url):
             if t[0] == "/":
                 t = host_url + t
             links.append(t)
+    """
 
+    print queue.queue
+
+    """
     print links
-
-    queue = Queue.Queue()
     for link in links:
         queue.put(link)
+    """
 
     t_num = 10
     threads=[]

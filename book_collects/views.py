@@ -135,55 +135,66 @@ class Collect_link(threading.Thread):
             if Art.objects.filter(link=link):
                 continue
 
-            if "sciencedirect" in link:
-                url = link + "?np=y"
-                p_str = get_page(url)
+            try:
+                if "sciencedirect" in link:
+                    url = link + "?np=y"
+                    p_str = get_page(url)
 
-                p_soup = BeautifulSoup.BeautifulSoup(p_str)
-                title = p_soup.find("title").getText()
-                book_name = p_soup.find("div", "title").getText()
-                page = p_soup.find("p", "volIssue").getText().replace(u"â&euro;&ldquo;", " - ")
+                    p_soup = BeautifulSoup.BeautifulSoup(p_str)
+                    title = p_soup.find("title").getText()
+                    book_name = p_soup.find("div", "title").getText()
+                    page = p_soup.find("p", "volIssue").getText().replace(u"â&euro;&ldquo;", " - ")
 
-                authorgroup = p_soup.find("ul", "authorGroup")
-                if authorgroup:
-                    lis = authorgroup.findAll("li")
-                    for li in lis:
-                        author_name = li.find("a", "authorName").getText()
-                        mails = re.findall(r'<a href="mailto:(.*?)">', str(li))
+                    authorgroup = p_soup.find("ul", "authorGroup")
+                    if authorgroup:
+                        lis = authorgroup.findAll("li")
+                        for li in lis:
+                            author_name = li.find("a", "authorName").getText()
+                            mails = re.findall(r'href="mailto:(.*?)"', str(li))
+                            for mail in mails:
+                                result_num += 1
+                                add_art(title, book_name, page, author_name, mail, link)
+
+                elif "onlinelibrary" in link:
+                    p_str = get_page(link)
+                    p_soup = BeautifulSoup.BeautifulSoup(p_str)
+                    title = p_soup.find("span", "mainTitle").getText()
+                    book_name = p_soup.find(id="productTitle").getText()
+                    page = p_soup.find("p", "articleDetails").getText()
+
+                    if p_soup.find(id="authors"):
+                        author = ""
+                        author_lis = p_soup.find(id="authors").findAll("li")
+                        for li in author_lis:
+                            if "*" in str(li):
+                                li_text = li.getText()
+                                ti = li_text.find("*")
+                                author = li_text[:ti]
+                                while True:
+                                    if not author:
+                                        break
+                                    if author[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                                        break
+                                    else:
+                                        author = author[1:]
+                        mails = re.findall(r'href="mailto:(.*?)"', p_str)
                         for mail in mails:
+                            mail = mail.replace("%E2%80%90", "-")
+                            author_name = author
+                            if not author:
+                                author_name = mail[:mail.find("@")].replace(".", " ")
                             result_num += 1
                             add_art(title, book_name, page, author_name, mail, link)
+                        if not mails:
+                            span_email = p_soup.find("span", "email")
+                            if span_email:
+                                t = span_email.getText()
+                                author_name = t[:t.find("(")]
+                                mail = t[t.find("(")+1:-1]
+                                add_art(title, book_name, page, author_name, mail, link)
 
-            elif "onlinelibrary" in link:
-                p_str = get_page(link)
-                p_soup = BeautifulSoup.BeautifulSoup(p_str)
-                title = p_soup.find("span", "mainTitle").getText()
-                book_name = p_soup.find(id="productTitle").getText()
-                page = p_soup.find("p", "articleDetails").getText()
-
-                if p_soup.find(id="authors"):
-                    author_name = ""
-                    author_lis = p_soup.find(id="authors").findAll("li")
-                    for li in author_lis:
-                        if "*" in str(li):
-                            li_text = li.getText()
-                            ti = li_text.find("*")
-                            author_name = li_text[:ti]
-                            while True:
-                                if not author_name:
-                                    break
-                                if author_name[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                                    break
-                                else:
-                                    author_name = author_name[1:]
-                    mails = re.findall(r'<a href="mailto:(.*?)"', p_str)
-                    for mail in mails:
-                        mail = mail.replace("%E2%80%90", "-")
-                        if not author_name:
-                            author_name = mail[:mail.find("@")].replace(".", " ")
-                        result_num += 1
-                        add_art(title, book_name, page, author_name, mail, link)
-
+            except:
+                print link, "+"
 
 
 
@@ -192,158 +203,137 @@ class Collect_link(threading.Thread):
 def collect_sciencedirect(url):
     print "===========", url, "============="
 
-    host_url = 'http://www.sciencedirect.com'
-    #url = 'http://www.sciencedirect.com/science/journal/19389736'
-    p_str = get_page(url)
-    p_soup = BeautifulSoup.BeautifulSoup(p_str)
+    try:
+        host_url = 'http://www.sciencedirect.com'
+        #url = 'http://www.sciencedirect.com/science/journal/19389736'
+        p_str = get_page(url)
+        p_soup = BeautifulSoup.BeautifulSoup(p_str)
 
-    year_links = []
-    issue_links = []
-    links = []
+        year_links = []
+        issue_links = []
+        links = []
 
-    tab = p_soup.find(id="volumeIssueData")
-    year_divs = tab.findAll("div", "txtBold")
-    for year in year_divs:
-        t = year.find("a").get("href")
-        if t[0] == "/":
-            t = host_url + t
-        if t not in year_links:
-            year_links.append(t)
-
-
-    for year_link in year_links:
-        if Read.objects.filter(url=year_link):
-            continue
-        issue_links.append(year_link)
-        y_str = get_page(year_link)
-        y_soup = BeautifulSoup.BeautifulSoup(y_str)
-        tab = y_soup.find(id="volumeIssueData")
-        issue_tds = tab.findAll("td", "txt")
-        for td in issue_tds:
-            issue_link = td.find("a")
-            if issue_link:
-                issue_link = issue_link.get("href")
-            if issue_link and issue_link[0] == "/":
-                issue_link = host_url + issue_link
-            if issue_link and issue_link not in issue_links:
-                issue_links.append(issue_link)
-
-    print issue_links
-
-    issue_queue = Queue.Queue()
-    queue = Queue.Queue()
-
-    for link in issue_links:
-        issue_queue.put(link)
-
-    t_num = 10
-    threads=[]
-    for i in xrange(t_num):
-        threads.append(Collect_issue(issue_queue, queue))
-    for i in xrange(t_num):
-        threads[i].start()
-    for i in xrange(t_num):
-        threads[i].join()
+        tab = p_soup.find(id="volumeIssueData")
+        year_divs = tab.findAll("div", "txtBold")
+        for year in year_divs:
+            t = year.find("a").get("href")
+            if t[0] == "/":
+                t = host_url + t
+            if t not in year_links:
+                year_links.append(t)
 
 
-    """
-    for issue_url in issue_links:
-        i_str = get_page(issue_url)
-        ts = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', i_str)
-        for t in ts:
-            if t not in links:
-                links.append(t)
-    """
+        for year_link in year_links:
+            if Read.objects.filter(url=year_link):
+                continue
+            issue_links.append(year_link)
+            y_str = get_page(year_link)
+            y_soup = BeautifulSoup.BeautifulSoup(y_str)
+            tab = y_soup.find(id="volumeIssueData")
+            issue_tds = tab.findAll("td", "txt")
+            for td in issue_tds:
+                issue_link = td.find("a")
+                if issue_link:
+                    issue_link = issue_link.get("href")
+                if issue_link and issue_link[0] == "/":
+                    issue_link = host_url + issue_link
+                if issue_link and issue_link not in issue_links:
+                    issue_links.append(issue_link)
 
-    print queue.queue
+        print issue_links
 
-    """
-    print links
-    for link in links:
-        queue.put(link)
-    """
+        issue_queue = Queue.Queue()
+        queue = Queue.Queue()
 
-    t_num = 10
-    threads=[]
-    for i in xrange(t_num):
-        threads.append(Collect_link(queue))
-    for i in xrange(t_num):
-        threads[i].start()
-    for i in xrange(t_num):
-        threads[i].join()
+        for link in issue_links:
+            issue_queue.put(link)
 
-    print "finish"
-    add_read(year_links[1:])
+        t_num = 10
+        threads=[]
+        for i in xrange(t_num):
+            threads.append(Collect_issue(issue_queue, queue))
+        for i in xrange(t_num):
+            threads[i].start()
+        for i in xrange(t_num):
+            threads[i].join()
+
+
+        print queue.queue
+
+
+        t_num = 10
+        threads=[]
+        for i in xrange(t_num):
+            threads.append(Collect_link(queue))
+        for i in xrange(t_num):
+            threads[i].start()
+        for i in xrange(t_num):
+            threads[i].join()
+
+        print "finish"
+        add_read(year_links[1:])
+
+    except:
+        pass
 
 
 
 def collect_onlinelibrary(url):
     print "===========", url, "============="
 
-    host_url = "http://onlinelibrary.wiley.com"
-    #url = 'http://onlinelibrary.wiley.com/journal/10.1111/(ISSN)1463-6395'
-    links = []
-    issue_links =[]
-    for year in range(2000,2015):
-        print year
-        year_url = url + "/issues/fragment?activeYear=" + str(year)
-        p_str = get_page(year_url)
-        issues = re.findall(r'<div class="issue"><a href="(.*?)"', p_str)
+    try:
 
-        for issue in issues:
-            if issue[0] == "/":
-                issue = host_url + issue
-            if issue not in issue_links:
-                issue_links.append(issue)
+        host_url = "http://onlinelibrary.wiley.com"
+        #url = 'http://onlinelibrary.wiley.com/journal/10.1111/(ISSN)1463-6395'
+        links = []
+        issue_links =[]
+        for year in range(2000,2015):
+            print year
+            year_url = url + "/issues/fragment?activeYear=" + str(year)
+            p_str = get_page(year_url)
+            issues = re.findall(r'<div class="issue"><a href="(.*?)"', p_str)
 
-    print issue_links
+            for issue in issues:
+                if issue[0] == "/":
+                    issue = host_url + issue
+                if issue not in issue_links:
+                    issue_links.append(issue)
 
-    issue_queue = Queue.Queue()
-    queue = Queue.Queue()
+        print issue_links
 
-    for link in issue_links:
-        issue_queue.put(link)
+        issue_queue = Queue.Queue()
+        queue = Queue.Queue()
 
-    t_num = 10
-    threads=[]
-    for i in xrange(t_num):
-        threads.append(Collect_issue(issue_queue, queue))
-    for i in xrange(t_num):
-        threads[i].start()
-    for i in xrange(t_num):
-        threads[i].join()
+        for link in issue_links:
+            issue_queue.put(link)
 
-    """
-    for issue_url in issue_links:
-        if  Read.objects.filter(url=issue_url):
-            continue
-        i_str = get_page(issue_url)
-        ts = re.findall(r'<div class="citation tocArticle"><a href="(.*?)"', i_str)
-        for t in ts:
-            if t[0] == "/":
-                t = host_url + t
-            links.append(t)
-    """
+        t_num = 10
+        threads=[]
+        for i in xrange(t_num):
+            threads.append(Collect_issue(issue_queue, queue))
+        for i in xrange(t_num):
+            threads[i].start()
+        for i in xrange(t_num):
+            threads[i].join()
 
-    print queue.queue
 
-    """
-    print links
-    for link in links:
-        queue.put(link)
-    """
+        print queue.queue
 
-    t_num = 10
-    threads=[]
-    for i in xrange(t_num):
-        threads.append(Collect_link(queue))
-    for i in xrange(t_num):
-        threads[i].start()
-    for i in xrange(t_num):
-        threads[i].join()
 
-    print "finish"
-    add_read(issue_links)
+        t_num = 10
+        threads=[]
+        for i in xrange(t_num):
+            threads.append(Collect_link(queue))
+        for i in xrange(t_num):
+            threads[i].start()
+        for i in xrange(t_num):
+            threads[i].join()
+
+        print "finish"
+        add_read(issue_links)
+
+    except:
+        pass
 
 
 

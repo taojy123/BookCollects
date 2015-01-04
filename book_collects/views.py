@@ -105,7 +105,7 @@ class Collect_issue(threading.Thread):
             link = self.issue_queue.get()
             if "sciencedirect" in link:
                 i_str = get_page(link)
-                ts = re.findall(r'<a href="(.*?)".*?artTitle.*?</a>', i_str)
+                ts = re.findall(r'<a.*?href="(.*?)".*?artTitle.*?</a>', i_str)
                 for t in ts:
                     if t not in self.queue.queue:
                         self.queue.put(t)
@@ -214,13 +214,18 @@ def collect_sciencedirect(url):
         links = []
 
         tab = p_soup.find(id="volumeIssueData")
-        year_divs = tab.findAll("div", "txtBold")
-        for year in year_divs:
-            t = year.find("a").get("href")
+
+        year_as = tab.findAll("a", {"aria-expanded":"true"})
+        year_as += tab.findAll("a", {"aria-expanded":"false"})
+
+        for year_a in year_as:
+            t = year_a.get("href")
             if t[0] == "/":
                 t = host_url + t
             if t not in year_links:
                 year_links.append(t)
+
+
 
 
         for year_link in year_links:
@@ -230,9 +235,9 @@ def collect_sciencedirect(url):
             y_str = get_page(year_link)
             y_soup = BeautifulSoup.BeautifulSoup(y_str)
             tab = y_soup.find(id="volumeIssueData")
-            issue_tds = tab.findAll("td", "txt")
-            for td in issue_tds:
-                issue_link = td.find("a")
+            issue_divs = tab.findAll("div", "txt")
+            for div in issue_divs:
+                issue_link = div.find("a")
                 if issue_link:
                     issue_link = issue_link.get("href")
                 if issue_link and issue_link[0] == "/":
@@ -240,7 +245,6 @@ def collect_sciencedirect(url):
                 if issue_link and issue_link not in issue_links:
                     issue_links.append(issue_link)
 
-        print issue_links
 
         issue_queue = Queue.Queue()
         queue = Queue.Queue()

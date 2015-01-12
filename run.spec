@@ -1,14 +1,17 @@
 # -*- mode: python -*-
-a = Analysis([os.path.join(HOMEPATH,'support\\_mountzlib.py'), os.path.join(HOMEPATH,'support\\useUnicode.py'), 'run.py'],
-             pathex=['E:\\workspace\\GitHub\\BookCollects'])
+a = Analysis(['run.py'],
+             pathex=['C:\\workspace\\git\\BookCollects'],
+             hiddenimports=[],
+             hookspath=None,
+             runtime_hooks=None)
 pyz = PYZ(a.pure)
-exe = EXE( pyz,
+exe = EXE(pyz,
           a.scripts,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name=os.path.join('dist', 'run.exe'),
+          name='run.exe',
           debug=False,
-          strip=False,
+          strip=None,
           upx=True,
           console=True )

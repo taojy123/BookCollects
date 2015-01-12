@@ -5,6 +5,7 @@ from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import auth
 from models import *
+from openpyxl import load_workbook
 import os
 import uuid
 import cookielib
@@ -110,7 +111,7 @@ class Collect_issue(threading.Thread):
                     if t not in self.queue.queue:
                         self.queue.put(t)
             elif "onlinelibrary" in link:
-                if  Read.objects.filter(url=link):
+                if Read.objects.filter(url=link):
                     continue
                 i_str = get_page(link)
                 ts = re.findall(r'<div class="citation tocArticle"><a href="(.*?)"', i_str)
@@ -346,6 +347,18 @@ def collect_onlinelibrary(url):
 
 
 def index(request):
+    wb = load_workbook(filename='books.xlsx')
+    sheet_name = wb.get_sheet_names()[0]
+    sheet = wb.get_sheet_by_name(sheet_name)
+    urls = ""
+    n = 0
+    while True:
+        n += 1
+        if not sheet.cell("B%d"%n).value:
+            break
+        name = str(sheet.cell("A%d"%n).value)
+        url = str(sheet.cell("B%d"%n).value)
+        urls += "%s   ,   %s\n" % (name, url)
     return render_to_response('index.html', locals())
 
 
@@ -353,13 +366,20 @@ def collect(request):
     global result_num
     result_num = 0
     urls = request.REQUEST.get("urls")
-    urls = urls.split()
+    urls = urls.split("\n")
     for url in urls:
+        url = url.split(",")[-1].strip()
+        if not url:
+            continue
+        if Collected.objects.filter(url=url).count():
+            continue
         if "sciencedirect" in url:
             collect_sciencedirect(url)
         elif "onlinelibrary" in url:
             collect_onlinelibrary(url)
+        Collected(url=url).save()
     time.sleep(5)
+    Collected.objects.all().delete()
     return HttpResponse(str(result_num))
 
 
@@ -371,6 +391,7 @@ def data(request):
 def del_art(request, id):
     Art.objects.filter(id=id).delete()
     return HttpResponseRedirect("/data/")
+
 
 def update_art(request):
     id = request.REQUEST.get("id")

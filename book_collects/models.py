@@ -20,3 +20,11 @@ class Art(models.Model):
 
 class Read(models.Model):
     url = models.CharField(max_length=255, blank=True , null=True)
+
+
+
+class Collected(models.Model):
+    url = models.CharField(max_length=255, blank=True , null=True)
+        
+
+

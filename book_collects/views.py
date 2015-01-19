@@ -356,9 +356,9 @@ def index(request):
         n += 1
         if not sheet.cell("B%d"%n).value:
             break
-        name = str(sheet.cell("A%d"%n).value)
+        # name = str(sheet.cell("A%d"%n).value.encode("gbk"))
         url = str(sheet.cell("B%d"%n).value)
-        urls += "%s   ,   %s\n" % (name, url)
+        urls += "%s\n" % url
     return render_to_response('index.html', locals())
 
 
@@ -367,7 +367,7 @@ def collect(request):
     result_num = 0
     urls = request.REQUEST.get("urls")
     urls = urls.split("\n")
-    for url in urls:
+    for url in urls[:10]:
         url = url.split(",")[-1].strip()
         if not url:
             continue

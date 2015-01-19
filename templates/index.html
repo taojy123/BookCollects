@@ -32,7 +32,7 @@
                         top.location = "/data/"
                     },
                     error:function(request){
-                        alert("遇到错误，请重试")
+                        // alert("遇到错误，请重试")
                         $("#info").html("<textarea style='width: 600px; height: 300px'>"+request.response+"</textarea>")
                         $("#form").show()
                         $("#waiting").hide()
@@ -70,7 +70,6 @@
 
             <img src="/static/images/waiting.gif" id="waiting" style="display: none"/>
             <div id="info"></div>
-
 
 
         </div>

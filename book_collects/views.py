@@ -367,7 +367,7 @@ def collect(request):
     result_num = 0
     urls = request.REQUEST.get("urls")
     urls = urls.split("\n")
-    for url in urls[:10]:
+    for url in urls:
         url = url.split(",")[-1].strip()
         if not url:
             continue
